@@ -24,7 +24,7 @@ int Keygen(unsigned char *pk, unsigned char *sk){
 	memset(sk, 0, LWE_N+LWE_N/8); // difference PKE Algorithm because random u.
 	unsigned char seed_s[HS*4];
 	unsigned int sk_random_idx;
-	int hw, count = 0;
+	int hw=0, count = 0;
 
 	randombytes(seed_s, HS*4);
 
