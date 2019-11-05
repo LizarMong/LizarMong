@@ -1,7 +1,7 @@
 CC = gcc
-
-CFLAGS = -O3
-CFLAGS1=-O3  -fomit-frame-pointer -msse2avx -mavx2 -march=native -std=c99
+CFLAGS =-O3
+CFLAGS1=-O3 -fomit-frame-pointer -msse2avx -mavx2 -march=native -std=c99
+CFLAGS2=-O0
 
 all :
 	$(CC) $(CFLAGS) -c LizarMong_KEM_Strong.c main.c randombytes.c fips202.c xe5.c

@@ -87,41 +87,6 @@ void EncDecTest_RING() {
 BREAK:
 	printf("    Enc Cycles: %lu \n",  cycles1/iter/testnum);
 	printf("    Dec Cycles: %lu \n",  cycles2/iter/testnum);
-
-
-
-
-
-/*
-	for (int l = 0; l < iter; ++l) {
-		for (i = 0; i < testnum; i++) {
-			Enc(c, m1, pk);
-			res = Dec(m2, c, sk, pk);
-			if (res == 1) {
-				printf("    Decryption Validity Error Type 1 : c3 components\n");
-				printf("iter: %d \t testnum: %d\n", iter, testnum);
-				break;
-			}
-
-			if (res == 2) {
-				printf("    Decryption Validity Error Type 2 : c2 components\n");
-				printf("iter: %d \t testnum: %d\n", iter, testnum);
-				break;
-			}
-
-			// Correctness check
-			for (i = 0; i < MESSAGE_LEN; ++i) {
-				if (m1[i] != m2[i]) {
-					printf("Correctness Error, %d\n", i);
-					break;
-				}
-			}
-			if (i < MESSAGE_LEN) break;
-		}
-	}
-	printf("    Enc Time: %f ms\n", elapsed1 * 1000. / CLOCKS_PER_SEC / testnum / iter);
-	printf("    Dec Time: %f ms\n", elapsed2 * 1000. / CLOCKS_PER_SEC / testnum / iter);
-*/
 }
 
 
