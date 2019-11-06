@@ -62,16 +62,16 @@ def checktheory(thres, n, ne, p, te, s):
 
 def main():
     # maximum error correction to plot
-    te = 15#이 값은 바꿔야 함.
+    te = 15
     # scheme to use
     q = 256
     p = 64
-    n = 512 #strong이면 1024로 변경
+    n = 512 #1024 for strong
     LizarMong = {}
     LizarMong['thres'] = q / 4 - q / (2 * p)
     LizarMong['s'] = {-1: 1. / 8, 0: 3. / 4, 1: 1. / 8}   #hs=128 with Comfort
     #LizarMong['s'] = {-1: 1. / 16, 0: 7. / 8, 1: 1. / 16}   #hs=128 with Strong
-    LizarMong['e'] = {-1: 1. / 4, 0: 1. / 2, 1: 1. / 4} #에러는 해밍웨이트를 안쓰고 k=1이므로 이 분포가 맞음.
+    LizarMong['e'] = {-1: 1. / 4, 0: 1. / 2, 1: 1. / 4}
     LizarMong['sprime'] = LizarMong['s']
     LizarMong['eprime'] = 0
     LizarMong['eprimeprime'] = 0
