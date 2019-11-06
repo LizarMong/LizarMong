@@ -19,11 +19,11 @@ int Keygen(unsigned char *pk, unsigned char *sk){
 	randombytes(seed_a, SEED_LEN);	
 	shake256(pk_a, LWE_N, seed_a, SEED_LEN);
 
-////////// Gen poly s //////////
+////////// Gen poly s and s_idx  //////////
 	memset(sk, 0, LWE_N+LWE_N/8);
 	unsigned char seed_s[HS*4];
 	unsigned int sk_random_idx;
-	int hw=0, count = 0;
+	int hw=0, count = 0, neg_start=0, back_position = HS;
 
 	randombytes(seed_s, HS*4);
 
@@ -35,6 +35,8 @@ int Keygen(unsigned char *pk, unsigned char *sk){
 		if (sk[sk_random_idx] == 0) {
 			sk[sk_random_idx] = (seed_s[count++] & 0x02) - 1;
 			hw++;
+			if (sk[sk_random_idx]==0x01){sk_s[neg_start++] = sk_random_idx;}
+			if (sk[sk_random_idx]==0xff){sk_s[--back_position] = sk_random_idx;}
 		}
 		if (count >= HS*4 - 3) {
 			randombytes(seed_s, HS*4);
@@ -46,21 +48,12 @@ int Keygen(unsigned char *pk, unsigned char *sk){
 		return 3;
 	}
 
-////////// Gen s_idx //////////
-	int neg_start = 0, back_position = HS;	
-	for (i = 0; i < LWE_N; ++i) {
-		if (sk[i] == 0x01){sk_s[neg_start++] = i;}
-		if (sk[i] == 0xff){sk_s[--back_position] = i;}
-	}
-
 /* ADD compare PKE algorithm */
 
-////////// Gen u //////////
+////////// Gen u and Concat sk = (sk || u) /////////
 	unsigned char u[LWE_N/8];
 	randombytes(u, LWE_N/8);
-
-////////// concat sk = sk || u ////////// 
-	for (i=LWE_N; i<LWE_N+LWE_N/8; ++i){sk[i] = u[i-LWE_N];}
+	memcpy(sk+LWE_N, u, LWE_N/8);
 
 /*		END of the ADD		*/
 
@@ -133,11 +126,11 @@ int Enc(unsigned char *c, unsigned char *shared_k, const unsigned char *pk){
 		return 3;
 	}
 
-////////// Set r = H(delta) ////////// 
+////////// Set r = H(delta) and Gen r_idx  ////////// 
 	unsigned char r[LWE_N]={0,};
 	uint16_t r_idx[HR];
 	unsigned int r_random_idx; 
-	int hw=0, count = 0;
+	int hw=0, count = 0, neg_start = 0, back_position = HR;
 
 	hash = calloc(HR*4, sizeof(unsigned char));
 	shake256(hash, HR*4, delta, size_of_delta);
@@ -150,22 +143,15 @@ int Enc(unsigned char *c, unsigned char *shared_k, const unsigned char *pk){
 		if (r[r_random_idx] == 0) {
 			r[r_random_idx] = (hash[count++] & 0x02) - 1;
 			hw++;
+			if (r[r_random_idx] == 0x01){r_idx[neg_start++] = r_random_idx;}
+			if (r[r_random_idx] == 0xff){r_idx[--back_position] = r_random_idx;}
 		}
 		if (count >= (HR*4 - 3)) { 
-			printf("New seed hash!\n");
 			shake256(hash, HR*4, hash, HR*4);
 			count = 0;
 		}
 	}
 	
-	
-////////// Generate r_idx ////////// 
-	int neg_start = 0, back_position = HR;
-
-	for (i = 0; i < LWE_N; ++i) {
-		if (r[i] == 0x01){r_idx[neg_start++] = i;}
-		else if (r[i] == 0xff){r_idx[--back_position] = i;}
-	}
 ////////// Encoding delta using Error Correcting Code ////////// 
 	unsigned char delta_hat[LWE_N / 8]={0,};
 
@@ -216,10 +202,10 @@ int Enc(unsigned char *c, unsigned char *shared_k, const unsigned char *pk){
 /* ADD compare PKE algorithm */
 
 ////////// G(c1,delta) ////////// 
-	hash_t=calloc((LWE_N+LWE_N+size_of_delta), sizeof(unsigned char));
+	hash_t=calloc((LWE_N+LWE_N+LWE_N/8), sizeof(unsigned char));
 	memcpy(hash_t, c, (LWE_N+LWE_N));	
-	memcpy(hash_t+(LWE_N+LWE_N), delta, size_of_delta);
-	sha3_256(shared_k, hash_t, LWE_N+LWE_N+size_of_delta);
+	memcpy(hash_t+(LWE_N+LWE_N), delta_hat, LWE_N/8);
+	sha3_256(shared_k, hash_t, LWE_N+LWE_N+LWE_N/8);
 	free(hash_t);
 
 /*		END of the ADD		*/
@@ -292,13 +278,13 @@ int Dec(unsigned char *shared_k, unsigned char *c, const unsigned char *sk, cons
 	xe5_234_fixerr(delta_hat);
 	memcpy(delta, delta_hat, size_of_delta);
 
-
-////////// Set r = H(delta) ////////// 
+////////// Set r = H(delta) and Gen r_idx ////////// 
 	unsigned char r[LWE_N] = { 0, };
 	unsigned int r_idx[HR];
 	unsigned int r_random_idx; 
 	int hw=0, count = 0;
-
+	neg_start = 0;
+	back_position = HR;
 	hash = calloc(HR*4, sizeof(unsigned char));
 	shake256(hash, HR*4, delta, size_of_delta);	
 
@@ -310,34 +296,22 @@ int Dec(unsigned char *shared_k, unsigned char *c, const unsigned char *sk, cons
 		if (r[r_random_idx] == 0) {
 			r[r_random_idx] = (hash[count++] & 0x02) - 1;
 			hw++;
+			if (r[r_random_idx] == 0x01){r_idx[neg_start++] = r_random_idx;}
+			if (r[r_random_idx] == 0xff){r_idx[--back_position] = r_random_idx;}
 		}
 		if (count >= (HR*4 - 3)) { 
-			printf("DEC_New seed hash!\n");
-			shake256(hash, HR*4, hash, HR*4);/////////////
+			shake256(hash, HR*4, hash, HR*4);
 			count = 0;
 		}
 	}
 	
-////////// Gen r_idx ////////// 
-	neg_start = 0;
-	back_position = HR;
-
-	for (i = 0; i < LWE_N; ++i) {
-		if (r[i] == 0x01){r_idx[neg_start++] = i;}
-		else if (r[i] == 0xff){r_idx[--back_position] = i;}
-		
-	}
-
 ////////// Encoding delta using Error Correcting Code //////////
 	memset(delta_hat, 0, LWE_N/8);
 	memcpy(delta_hat, delta, size_of_delta);
 	xe5_234_compute(delta_hat);
 
-
 ////////// Parse seed_a||pk_b from pk & Make pk_a ////////// 
-	unsigned char pk_a[LWE_N];
-	unsigned char pk_b[LWE_N];
-	unsigned char seed_a[SEED_LEN];
+	unsigned char pk_a[LWE_N], pk_b[LWE_N], seed_a[SEED_LEN];
 
 	memcpy(seed_a, pk, SEED_LEN);
 	shake256(pk_a, LWE_N, seed_a, SEED_LEN);
@@ -347,7 +321,7 @@ int Dec(unsigned char *shared_k, unsigned char *c, const unsigned char *sk, cons
 ////////// Initialize c1h_b as q/2 * delta_hat //////////  	
 	for (i = 0; i < LWE_N / 8; ++i) {
 		for (j = 0; j < 8; ++j) {
-			c1h_b[8 * i + j] = (delta_hat[i] >> j) << _8_LOG_T;=
+			c1h_b[8 * i + j] = (delta_hat[i] >> j) << _8_LOG_T;
 		}
 	}
 
@@ -376,7 +350,6 @@ int Dec(unsigned char *shared_k, unsigned char *c, const unsigned char *sk, cons
 ////////// check c == c_hat ? ////////// 
 
 	for (i = 0; i < LWE_N; ++i) {
-		c[0] = 3;
 		if ((c[i] != ((c1h_a[i] + 0x02) & 0xfc)) || (c[LWE_N + i] != ((c1h_b[i] + 0x08) & 0xf0))){
 			// G(c1, u)
 			hash_t=calloc((LWE_N+LWE_N+LWE_N/8), sizeof(unsigned char));
@@ -393,10 +366,10 @@ int Dec(unsigned char *shared_k, unsigned char *c, const unsigned char *sk, cons
 	}
 
 ////////// G(c1, delta) ////////// 
-	hash_t=calloc((LWE_N+LWE_N+size_of_delta), sizeof(unsigned char));
+	hash_t=calloc((LWE_N+LWE_N+LWE_N/8), sizeof(unsigned char));
 	memcpy(hash_t, c, LWE_N+LWE_N);
-	memcpy(hash_t+LWE_N+LWE_N, delta, size_of_delta);
-	sha3_256(shared_k, hash_t, LWE_N+LWE_N+size_of_delta);
+	memcpy(hash_t+LWE_N+LWE_N, delta_hat, LWE_N/8);
+	sha3_256(shared_k, hash_t, LWE_N+LWE_N+LWE_N/8);
 
 	free(hash_t);
 	free(hash);
