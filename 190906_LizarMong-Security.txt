@@ -1,0 +1,76 @@
+We use Online LWE Estimator
+(https://lwe-estimator.readthedocs.io/en/latest/index.html)
+
+load("https://bitbucket.org/malb/lwe-estimator/raw/HEAD/estimator.py")
+#######Comfort parameter; 128bit###############
+n=512
+q=256
+p=64
+k=1.
+sttdev=sqrt(k/2)
+hs=128
+hr=128
+R_alpha=sqrt(3.141592653589793238462643383/6.)/p
+
+alpha=alphaf(sigmaf(sttdev),q)
+
+Qcost=partial(BKZ.ADPS16, mode="quantum")
+Ccost=partial(BKZ.ADPS16, mode="classical")
+Pcost=partial(BKZ.ADPS16, mode="paranoid")
+
+primald=partial(drop_and_solve, primal_usvp)
+duald=partial(drop_and_solve, dual_scale)
+print("###############Comfort parameter#####################")
+print("Each First row is LWE // Second row is LWR")
+print("Q_dual")
+print(duald(n, alpha, q, secret_distribution=((-1,1),hs), reduction_cost_model=Qcost))
+print(duald(n, R_alpha, q, secret_distribution=((-1,1),hr), reduction_cost_model=Qcost))
+print("C_dual")
+print(duald(n, alpha, q, secret_distribution=((-1,1),hs), reduction_cost_model=Ccost))
+print(duald(n, R_alpha, q, secret_distribution=((-1,1),hr), reduction_cost_model=Ccost))
+print("P_dual")
+print(duald(n, alpha, q, secret_distribution=((-1,1),hs), reduction_cost_model=Pcost))
+print(duald(n, R_alpha, q, secret_distribution=((-1,1),hr), reduction_cost_model=Pcost))
+
+print
+print("Q_primal")
+print(primald(n, alpha, q, secret_distribution=((-1,1),hs), m=n, rotations=True, postprocess=False, reduction_cost_model=Qcost, decision=True))
+print(primald(n, R_alpha, q, secret_distribution=((-1,1),hr), m=n, rotations=True, postprocess=False, reduction_cost_model=Qcost, decision=True))
+print("C_primal")
+print(primald(n, alpha, q, secret_distribution=((-1,1),hs), m=n, rotations=True, postprocess=False, reduction_cost_model=Ccost, decision=True))
+print(primald(n, R_alpha, q, secret_distribution=((-1,1),hr), m=n, rotations=True, postprocess=False, reduction_cost_model=Ccost, decision=True))
+print("P_primal")
+print(primald(n, alpha, q, secret_distribution=((-1,1),hs), m=n, rotations=True, postprocess=False, reduction_cost_model=Pcost, decision=True))
+print(primald(n, R_alpha, q, secret_distribution=((-1,1),hr), m=n, rotations=True, postprocess=False, reduction_cost_model=Pcost, decision=True))
+
+print
+
+#######Strong parameter; 256bit###############
+#q, p, k, hs, hr is same
+n=1024
+
+print("###############Strong parameter#####################")
+print("Each First row is LWE // Second row is LWR")
+print("Q_dual")
+print(duald(n, alpha, q, secret_distribution=((-1,1),hs), reduction_cost_model=Qcost))
+print(duald(n, R_alpha, q, secret_distribution=((-1,1),hr), reduction_cost_model=Qcost))
+print("C_dual")
+print(duald(n, alpha, q, secret_distribution=((-1,1),hs), reduction_cost_model=Ccost))
+print(duald(n, R_alpha, q, secret_distribution=((-1,1),hr), reduction_cost_model=Ccost))
+print("P_dual")
+print(duald(n, alpha, q, secret_distribution=((-1,1),hs), reduction_cost_model=Pcost))
+print(duald(n, R_alpha, q, secret_distribution=((-1,1),hr), reduction_cost_model=Pcost))
+
+print
+print("Q_primal")
+print(primald(n, alpha, q, secret_distribution=((-1,1),hs), m=n, rotations=True, postprocess=False, reduction_cost_model=Qcost, decision=True))
+print(primald(n, R_alpha, q, secret_distribution=((-1,1),hr), m=n, rotations=True, postprocess=False, reduction_cost_model=Qcost, decision=True))
+print("C_primal")
+print(primald(n, alpha, q, secret_distribution=((-1,1),hs), m=n, rotations=True, postprocess=False, reduction_cost_model=Ccost, decision=True))
+print(primald(n, R_alpha, q, secret_distribution=((-1,1),hr), m=n, rotations=True, postprocess=False, reduction_cost_model=Ccost, decision=True))
+print("P_primal")
+print(primald(n, alpha, q, secret_distribution=((-1,1),hs), m=n, rotations=True, postprocess=False, reduction_cost_model=Pcost, decision=True))
+print(primald(n, R_alpha, q, secret_distribution=((-1,1),hr), m=n, rotations=True, postprocess=False, reduction_cost_model=Pcost, decision=True))
+
+print
+
